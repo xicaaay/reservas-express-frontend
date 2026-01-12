@@ -31,22 +31,25 @@ El frontend consume una **API REST pública** desarrollada en NestJS.
 
 ```bash
 git clone <https://github.com/xicaaay/reservas-express-frontend.git>
+```
+### 2. Instalar dependencias
+Entrar al proyecto
+```bash
 cd reservas-express-frontend
 ```
-
-### 2. Instalar dependencias
+### 3. Instalar dependencias
 ```bash
 npm install
 ```
 
-### 3. Configurar variables de entorno
+### 4. Configurar variables de entorno
 Crea un archivo .env.local en la raíz del proyecto y agrega:
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 Esta variable indica la URL base del backend que expone la API REST.
 
-### 4. Levantar el servidor de desarrollo
+### 5. Levantar el servidor de desarrollo
 ```bash
 npm run dev
 ```
@@ -121,4 +124,30 @@ Sistema de estilos utility-first.
 Sistema de notificaciones.
 - Feedback inmediato al usuario
 - Manejo de estados de carga, éxito y error
+
+### 🔗 Compartir Ticket Digital (Web Share API)
+
+El sistema permite al usuario **compartir su ticket digital** de forma sencilla una vez que la reserva ha sido confirmada, utilizando la **Web Share API** del navegador o, como alternativa, un enlace público.
+
+#### ¿Qué se comparte?
+- No se comparte el archivo PDF directamente.
+- Se comparte un **enlace público al ticket digital (PDF)**, accesible desde cualquier dispositivo.
+
+Esto garantiza mayor compatibilidad entre navegadores y dispositivos, especialmente en entornos móviles.
+
+#### Funcionamiento
+1. El backend genera el ticket digital en formato PDF.
+2. El ticket queda disponible a través de un endpoint público.
+3. Desde la pantalla de confirmación, el usuario puede compartir el ticket utilizando:
+   - **Web Share API** (si el navegador lo soporta).
+   - **Copia del enlace al portapapeles** como alternativa.
+
+#### Web Share API
+La Web Share API permite abrir el menú nativo del sistema para compartir contenido.
+
+- En dispositivos móviles se muestra el menú de compartir del sistema (WhatsApp, correo, mensajes, etc.).
+- En navegadores de escritorio compatibles, se ofrece una experiencia similar o la opción de copiar el enlace.
+
+La implementación verifica la disponibilidad de la API antes de utilizarla.
+
 
