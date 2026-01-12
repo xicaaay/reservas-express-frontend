@@ -43,6 +43,10 @@ export default function CheckoutClient() {
   const [errors, setErrors] =
     useState<PaymentFormErrors>({});
 
+  // 🔒 Control de submit
+  const [isProcessing, setIsProcessing] =
+    useState(false);
+
   /**
    * Carga del resumen de la reserva
    */
@@ -97,6 +101,8 @@ export default function CheckoutClient() {
    * Flujo de pago
    */
   const handlePay = async () => {
+    if (isProcessing) return; // ⛔ evita doble submit
+
     if (!validateForm()) {
       toast.error('Revisa los datos de la tarjeta');
       return;
@@ -107,7 +113,10 @@ export default function CheckoutClient() {
       return;
     }
 
-    const toastId = toast.loading('Procesando pago');
+    setIsProcessing(true);
+    const toastId = toast.loading(
+      'Procesando pago',
+    );
 
     try {
       const result = await checkoutPayment({
@@ -118,7 +127,7 @@ export default function CheckoutClient() {
         cvv,
       });
 
-      // ✅ Estados finales felices (éxito real o idempotente)
+      // ✅ Estados finales felices
       if (
         result?.status === 'PAID' ||
         result?.message === 'Reservation already paid' ||
@@ -143,6 +152,8 @@ export default function CheckoutClient() {
         error.message || 'Error en el pago',
         { id: toastId },
       );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -222,6 +233,7 @@ export default function CheckoutClient() {
               <input
                 maxLength={16}
                 inputMode="numeric"
+                disabled={isProcessing}
                 className={`w-full border border-gray-300 rounded-lg py-2 pl-10 pr-3 focus:outline-none focus:ring-2 ${
                   errors.cardNumber
                     ? 'border-red-500 focus:ring-red-500'
@@ -249,6 +261,7 @@ export default function CheckoutClient() {
               Titular de la tarjeta
             </label>
             <input
+              disabled={isProcessing}
               className={`w-full border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 ${
                 errors.cardHolder
                   ? 'border-red-500 focus:ring-red-500'
@@ -274,6 +287,7 @@ export default function CheckoutClient() {
                 Expiración
               </label>
               <input
+                disabled={isProcessing}
                 maxLength={5}
                 inputMode="numeric"
                 className={`w-full border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 ${
@@ -310,6 +324,7 @@ export default function CheckoutClient() {
                 CVV
               </label>
               <input
+                disabled={isProcessing}
                 maxLength={3}
                 inputMode="numeric"
                 className={`w-full border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 ${
@@ -337,10 +352,17 @@ export default function CheckoutClient() {
         {/* Acción */}
         <button
           onClick={handlePay}
-          className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white py-3 rounded-lg font-medium transition"
+          disabled={isProcessing}
+          className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition ${
+            isProcessing
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-black hover:bg-gray-900 text-white'
+          }`}
         >
           <MdOutlinePayments className="text-sm" />
-          Pagar ${reservation.total}
+          {isProcessing
+            ? 'Procesando...'
+            : `Pagar $${reservation.total}`}
         </button>
 
         {/* Footer */}
