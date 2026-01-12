@@ -12,7 +12,7 @@ import {
 } from '@/lib/payment-validations/payment';
 
 // React Icons
-import { MdOutlinePayments } from "react-icons/md";
+import { MdOutlinePayments } from 'react-icons/md';
 import { FaCreditCard } from 'react-icons/fa';
 
 type ReservationSummary = {
@@ -21,9 +21,10 @@ type ReservationSummary = {
   category: string;
   quantity: number;
   total: number;
+  status?: string;
 };
 
-export default function CheckoutPage() {
+export default function CheckoutClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -51,17 +52,27 @@ export default function CheckoutPage() {
     fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`,
     )
-      .then((res) => {
+      .then(async (res) => {
         if (!res.ok) {
           throw new Error('Reservation not found');
         }
         return res.json();
       })
-      .then(setReservation)
-      .catch(() =>
-        toast.error('No se pudo cargar la reserva'),
-      );
-  }, [reservationId]);
+      .then((data) => {
+        // 🔐 Si ya está pagada, redirigimos directo
+        if (data.status === 'PAID') {
+          router.replace(
+            `/confirmation?reservationId=${data.id}`,
+          );
+          return;
+        }
+
+        setReservation(data);
+      })
+      .catch(() => {
+        toast.error('No se pudo cargar la reserva');
+      });
+  }, [reservationId, router]);
 
   /**
    * Ejecuta validaciones usando la lógica externa
@@ -83,7 +94,7 @@ export default function CheckoutPage() {
   };
 
   /**
-   * Flujo de pago (lógica existente intacta)
+   * Flujo de pago
    */
   const handlePay = async () => {
     if (!validateForm()) {
@@ -96,12 +107,10 @@ export default function CheckoutPage() {
       return;
     }
 
-    const toastId = toast.loading(
-      'Procesando pago',
-    );
+    const toastId = toast.loading('Procesando pago');
 
     try {
-      await checkoutPayment({
+      const result = await checkoutPayment({
         reservationId,
         cardNumber,
         cardHolder,
@@ -109,12 +118,25 @@ export default function CheckoutPage() {
         cvv,
       });
 
-      toast.success('Pago confirmado', {
-        id: toastId,
-      });
+      // ✅ Estados finales felices (éxito real o idempotente)
+      if (
+        result?.status === 'PAID' ||
+        result?.message === 'Reservation already paid' ||
+        result?.message === 'Payment processed successfully'
+      ) {
+        toast.success('Pago confirmado', {
+          id: toastId,
+        });
 
-      router.push(
-        `/confirmation?reservationId=${reservationId}`,
+        router.push(
+          `/confirmation?reservationId=${reservationId}`,
+        );
+        return;
+      }
+
+      throw new Error(
+        result?.message ||
+          'Estado de pago inesperado',
       );
     } catch (error: any) {
       toast.error(
@@ -178,7 +200,7 @@ export default function CheckoutPage() {
             </span>
           </div>
 
-          <div className="p-3 flex justify-between border-b border-gray-300">
+          <div className="p-3 flex justify-between">
             <span className="font-semibold text-gray-700">
               Total
             </span>
@@ -317,7 +339,7 @@ export default function CheckoutPage() {
           onClick={handlePay}
           className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white py-3 rounded-lg font-medium transition"
         >
-          <MdOutlinePayments  className="text-sm" />
+          <MdOutlinePayments className="text-sm" />
           Pagar ${reservation.total}
         </button>
 

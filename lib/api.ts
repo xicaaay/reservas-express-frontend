@@ -44,8 +44,6 @@ export async function createReservation(payload: {
   );
 
   const text = await res.text();
-  console.log('STATUS:', res.status);
-  console.log('RESPONSE RAW:', text);
 
   let data;
   try {
@@ -80,10 +78,18 @@ export async function checkoutPayment(payload: {
     }
   );
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Checkout failed');
+  const data = await response.json();
+
+  // errores
+  if (
+    !response.ok &&
+    data.status !== 'PAID' &&
+    data.message !== 'Payment processed successfully' &&
+    data.message !== 'Reservation already paid'
+  ) {
+    throw new Error(data.message || 'Checkout failed');
   }
 
-  return response.json();
+  // Estados finales felices
+  return data;
 }
