@@ -192,7 +192,7 @@ export default function HomePage() {
 
           <button
             onClick={handleSearch}
-            className="w-full bg-black hover:bg-gray-900 text-white py-3 rounded-xl font-medium transition"
+            className="w-full bg-black hover:bg-gray-900 text-white py-3 rounded-xl font-medium transition cursor-pointer"
           >
             Consultar disponibilidad
           </button>
