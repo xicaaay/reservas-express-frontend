@@ -78,18 +78,16 @@ export async function checkoutPayment(payload: {
     }
   );
 
-  const data = await response.json();
+  const json = await response.json();
 
-  // errores
-  if (
-    !response.ok &&
-    data.status !== 'PAID' &&
-    data.message !== 'Payment processed successfully' &&
-    data.message !== 'Reservation already paid'
-  ) {
-    throw new Error(data.message || 'Checkout failed');
+  if (!response.ok) {
+    throw new Error(json.message || 'Checkout failed');
   }
 
-  // Estados finales felices
-  return data;
+  // stauts
+  return {
+    message: json.message,
+    ...json.data,
+  };
 }
+
